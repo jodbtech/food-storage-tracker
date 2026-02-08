@@ -60,7 +60,7 @@ Color-coded visual alerts keep you informed:
 ## 🚀 Getting Started
 
 ### Online Version
-Visit the live app: `https://[your-username].github.io/[repo-name]/`
+Visit the live app: `https://jodbtech.github.io/food-storage-tracker`
 
 ### Add to Home Screen
 
