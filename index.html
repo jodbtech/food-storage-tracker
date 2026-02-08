@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Food Tracker</title>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    // Lucide icons as inline SVGs
+    const Camera = () => (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/>
+        <circle cx="12" cy="13" r="3"/>
+      </svg>
+    );
+
+    const Trash2 = () => (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <polyline points="3 6 5 6 21 6"/>
+        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+        <line x1="10" y1="11" x2="10" y2="17"/>
+        <line x1="14" y1="11" x2="14" y2="17"/>
+      </svg>
+    );
+
+    const Plus = () => (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <line x1="12" y1="5" x2="12" y2="19"/>
+        <line x1="5" y1="12" x2="19" y2="12"/>
+      </svg>
+    );
+
+    const AlertCircle = () => (
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="10"/>
+        <line x1="12" y1="8" x2="12" y2="12"/>
+        <line x1="12" y1="16" x2="12.01" y2="16"/>
+      </svg>
+    );
+
+    const Search = () => (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="11" cy="11" r="8"/>
+        <path d="m21 21-4.35-4.35"/>
+      </svg>
+    );
+
+    const ChefHat = () => (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M6 13.87A4 4 0 0 1 7.41 6a5.11 5.11 0 0 1 1.05-1.54 5 5 0 0 1 7.08 0A5.11 5.11 0 0 1 16.59 6 4 4 0 0 1 18 13.87V21H6Z"/>
+        <line x1="6" y1="17" x2="18" y2="17"/>
+      </svg>
+    );
+
+    const X = () => (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <line x1="18" y1="6" x2="6" y2="18"/>
+        <line x1="6" y1="6" x2="18" y2="18"/>
+      </svg>
+    );
+
+    // Recipe database
+    const RECIPES = [
+      { name: "Chicken Stir Fry", ingredients: ["chicken", "broccoli", "carrots", "rice"], time: "20 min" },
+      { name: "Pasta Primavera", ingredients: ["pasta", "tomatoes", "bell peppers", "onion", "garlic"], time: "25 min" },
+      { name: "Greek Salad", ingredients: ["tomatoes", "cucumber", "feta", "olives", "lettuce"], time: "10 min" },
+      { name: "Chicken Caesar Salad", ingredients: ["chicken", "lettuce", "parmesan", "bread"], time: "15 min" },
+      { name: "Veggie Omelet", ingredients: ["eggs", "bell peppers", "onion", "cheese", "spinach"], time: "10 min" },
+      { name: "Grilled Cheese", ingredients: ["bread", "cheese", "butter"], time: "10 min" },
+      { name: "Spaghetti Bolognese", ingredients: ["pasta", "ground beef", "tomatoes", "onion", "garlic"], time: "30 min" },
+      { name: "Chicken Soup", ingredients: ["chicken", "carrots", "celery", "onion", "noodles"], time: "40 min" },
+      { name: "Beef Tacos", ingredients: ["ground beef", "tortillas", "lettuce", "tomatoes", "cheese"], time: "20 min" },
+      { name: "Caprese Salad", ingredients: ["tomatoes", "mozzarella", "basil"], time: "5 min" },
+      { name: "Smoothie Bowl", ingredients: ["banana", "berries", "yogurt", "granola"], time: "5 min" },
+      { name: "Fried Rice", ingredients: ["rice", "eggs", "peas", "carrots", "soy sauce"], time: "15 min" },
+      { name: "BLT Sandwich", ingredients: ["bacon", "lettuce", "tomatoes", "bread", "mayo"], time: "10 min" },
+      { name: "Mushroom Risotto", ingredients: ["rice", "mushrooms", "onion", "parmesan", "butter"], time: "35 min" },
+      { name: "Fish Tacos", ingredients: ["fish", "tortillas", "cabbage", "lime", "cilantro"], time: "20 min" },
+      { name: "Margherita Pizza", ingredients: ["pizza dough", "mozzarella", "tomatoes", "basil"], time: "25 min" },
+      { name: "Beef Stew", ingredients: ["beef", "potatoes", "carrots", "onion", "celery"], time: "2 hours" },
+      { name: "Pancakes", ingredients: ["flour", "eggs", "milk", "butter", "syrup"], time: "15 min" },
+      { name: "Quesadilla", ingredients: ["tortillas", "cheese", "chicken", "bell peppers"], time: "10 min" },
+      { name: "Tuna Salad", ingredients: ["tuna", "mayo", "celery", "lettuce", "bread"], time: "10 min" }
+    ];
+
+    const CATEGORIES = [
+      { value: "dairy", label: "🥛 Dairy", color: "bg-blue-100" },
+      { value: "produce", label: "🥬 Produce", color: "bg-green-100" },
+      { value: "meat", label: "🥩 Meat & Poultry", color: "bg-red-100" },
+      { value: "seafood", label: "🐟 Seafood", color: "bg-cyan-100" },
+      { value: "grains", label: "🌾 Grains & Bread", color: "bg-yellow-100" },
+      { value: "frozen", label: "❄️ Frozen", color: "bg-indigo-100" },
+      { value: "beverages", label: "🥤 Beverages", color: "bg-purple-100" },
+      { value: "condiments", label: "🧂 Condiments", color: "bg-orange-100" },
+      { value: "snacks", label: "🍿 Snacks", color: "bg-pink-100" },
+      { value: "other", label: "📦 Other", color: "bg-gray-100" }
+    ];
+
+    function FoodTracker() {
+      const [items, setItems] = useState([]);
+      const [newItem, setNewItem] = useState({
+        name: '',
+        location: 'fridge',
+        expirationDate: '',
+        quantity: '',
+        category: 'other',
+        photo: null
+      });
+      const [searchQuery, setSearchQuery] = useState('');
+      const [filterCategory, setFilterCategory] = useState('all');
+      const [filterLocation, setFilterLocation] = useState('all');
+      const [filterExpiration, setFilterExpiration] = useState('all');
+      const [showRecipes, setShowRecipes] = useState(false);
+
+      // Load items from localStorage on mount
+      useEffect(() => {
+        const saved = localStorage.getItem('foodTrackerItems');
+        if (saved) {
+          try {
+            setItems(JSON.parse(saved));
+          } catch (e) {
+            console.error('Error loading items:', e);
+          }
+        }
+      }, []);
+
+      // Save items whenever they change
+      useEffect(() => {
+        if (items.length >= 0) {
+          localStorage.setItem('foodTrackerItems', JSON.stringify(items));
+        }
+      }, [items]);
+
+      const addItem = () => {
+        if (newItem.name.trim() && newItem.expirationDate) {
+          setItems([...items, {
+            ...newItem,
+            id: Date.now(),
+            addedDate: new Date().toISOString()
+          }]);
+          setNewItem({
+            name: '',
+            location: 'fridge',
+            expirationDate: '',
+            quantity: '',
+            category: 'other',
+            photo: null
+          });
+        }
+      };
+
+      const handlePhotoUpload = async (event) => {
+        const file = event.target.files?.[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            setNewItem({
+              ...newItem,
+              photo: e.target.result
+            });
+          };
+          reader.readAsDataURL(file);
+        }
+      };
+
+      const removePhoto = () => {
+        setNewItem({
+          ...newItem,
+          photo: null
+        });
+      };
+
+      const deleteItem = (id) => {
+        setItems(items.filter(item => item.id !== id));
+      };
+
+      const getDaysUntilExpiration = (expirationDate) => {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const expDate = new Date(expirationDate);
+        expDate.setHours(0, 0, 0, 0);
+        const diffTime = expDate - today;
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        return diffDays;
+      };
+
+      const getExpirationStatus = (expirationDate) => {
+        const days = getDaysUntilExpiration(expirationDate);
+        if (days < 0) return { status: 'expired', color: 'bg-red-100 border-red-300', text: 'Expired' };
+        if (days === 0) return { status: 'today', color: 'bg-red-100 border-red-300', text: 'Expires today' };
+        if (days <= 3) return { status: 'soon', color: 'bg-yellow-100 border-yellow-300', text: `${days} days left` };
+        if (days <= 7) return { status: 'week', color: 'bg-blue-50 border-blue-200', text: `${days} days left` };
+        return { status: 'good', color: 'bg-green-50 border-green-200', text: `${days} days left` };
+      };
+
+      // Filter and search items
+      const getFilteredItems = () => {
+        return items.filter(item => {
+          // Search query
+          if (searchQuery && !item.name.toLowerCase().includes(searchQuery.toLowerCase())) {
+            return false;
+          }
+          
+          // Category filter
+          if (filterCategory !== 'all' && item.category !== filterCategory) {
+            return false;
+          }
+          
+          // Location filter
+          if (filterLocation !== 'all' && item.location !== filterLocation) {
+            return false;
+          }
+          
+          // Expiration filter
+          if (filterExpiration !== 'all') {
+            const days = getDaysUntilExpiration(item.expirationDate);
+            if (filterExpiration === 'expired' && days >= 0) return false;
+            if (filterExpiration === 'soon' && (days < 0 || days > 3)) return false;
+            if (filterExpiration === 'week' && (days < 0 || days > 7)) return false;
+          }
+          
+          return true;
+        });
+      };
+
+      // Get recipe suggestions based on expiring items
+      const getRecipeSuggestions = () => {
+        const expiringItems = items
+          .filter(item => getDaysUntilExpiration(item.expirationDate) <= 3 && getDaysUntilExpiration(item.expirationDate) >= 0)
+          .map(item => item.name.toLowerCase());
+        
+        if (expiringItems.length === 0) return [];
+        
+        // Find recipes that match expiring ingredients
+        const suggestions = RECIPES
+          .map(recipe => {
+            const matchCount = recipe.ingredients.filter(ing => 
+              expiringItems.some(item => item.includes(ing) || ing.includes(item))
+            ).length;
+            return { ...recipe, matchCount };
+          })
+          .filter(recipe => recipe.matchCount > 0)
+          .sort((a, b) => b.matchCount - a.matchCount)
+          .slice(0, 5);
+        
+        return suggestions;
+      };
+
+      const filteredItems = getFilteredItems();
+      const fridgeItems = filteredItems.filter(item => item.location === 'fridge');
+      const pantryItems = filteredItems.filter(item => item.location === 'pantry');
+      const recipeSuggestions = getRecipeSuggestions();
+
+      const renderItems = (itemList) => {
+        if (itemList.length === 0) {
+          return <p className="text-gray-400 text-sm italic">No items found</p>;
+        }
+
+        return itemList
+          .sort((a, b) => new Date(a.expirationDate) - new Date(b.expirationDate))
+          .map(item => {
+            const expStatus = getExpirationStatus(item.expirationDate);
+            const category = CATEGORIES.find(c => c.value === item.category);
+            
+            return (
+              <div key={item.id} className={`p-3 rounded-lg border-2 ${expStatus.color} mb-2`}>
+                <div className="flex gap-3">
+                  {item.photo && (
+                    <img 
+                      src={item.photo} 
+                      alt={item.name}
+                      className="w-20 h-20 object-cover rounded-lg flex-shrink-0 cursor-pointer hover:opacity-80"
+                      onClick={() => window.open(item.photo, '_blank')}
+                      title="Click to view full size"
+                    />
+                  )}
+                  
+                  <div className="flex-1 min-w-0">
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-semibold text-gray-800">{item.name}</h3>
+                        <span className={`text-xs px-2 py-1 rounded ${category?.color} inline-block mt-1`}>
+                          {category?.label}
+                        </span>
+                        {item.quantity && <p className="text-sm text-gray-600 mt-1">Qty: {item.quantity}</p>}
+                        <p className="text-sm text-gray-700 mt-1">
+                          {(expStatus.status === 'expired' || expStatus.status === 'today') && 
+                            <span className="inline-block mr-1"><AlertCircle /></span>
+                          }
+                          {expStatus.status === 'soon' && 
+                            <span className="inline-block mr-1"><AlertCircle /></span>
+                          }
+                          {expStatus.text}
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => deleteItem(item.id)}
+                        className="text-red-500 hover:text-red-700 p-1 flex-shrink-0"
+                        aria-label="Delete item"
+                      >
+                        <Trash2 />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          });
+      };
+
+      return (
+        <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 p-6">
+          <div className="max-w-6xl mx-auto">
+            <h1 className="text-4xl font-bold text-gray-800 mb-8 text-center">
+              🥗 Food Tracker
+            </h1>
+
+            {/* Recipe Suggestions Button */}
+            {recipeSuggestions.length > 0 && (
+              <div className="bg-orange-50 border-2 border-orange-300 rounded-xl p-4 mb-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="font-semibold text-orange-800 flex items-center gap-2">
+                      <ChefHat />
+                      {recipeSuggestions.length} Recipe Suggestions Available!
+                    </h3>
+                    <p className="text-sm text-orange-700 mt-1">Use up items expiring soon</p>
+                  </div>
+                  <button
+                    onClick={() => setShowRecipes(!showRecipes)}
+                    className="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg font-semibold"
+                  >
+                    {showRecipes ? 'Hide' : 'Show'} Recipes
+                  </button>
+                </div>
+                
+                {showRecipes && (
+                  <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {recipeSuggestions.map((recipe, idx) => (
+                      <div key={idx} className="bg-white p-3 rounded-lg border border-orange-200">
+                        <h4 className="font-semibold text-gray-800">{recipe.name}</h4>
+                        <p className="text-sm text-gray-600 mt-1">⏱️ {recipe.time}</p>
+                        <p className="text-xs text-orange-700 mt-1">
+                          Matches {recipe.matchCount} of your expiring items
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Search and Filters */}
+            <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
+              <h2 className="text-xl font-semibold text-gray-800 mb-4">Search & Filter</h2>
+              
+              {/* Search bar */}
+              <div className="mb-4 relative">
+                <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+                  <Search />
+                </div>
+                <input
+                  type="text"
+                  placeholder="Search items..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery('')}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  >
+                    <X />
+                  </button>
+                )}
+              </div>
+
+              {/* Filters */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <select
+                  value={filterCategory}
+                  onChange={(e) => setFilterCategory(e.target.value)}
+                  className="px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"
+                >
+                  <option value="all">All Categories</option>
+                  {CATEGORIES.map(cat => (
+                    <option key={cat.value} value={cat.value}>{cat.label}</option>
+                  ))}
+                </select>
+
+                <select
+                  value={filterLocation}
+                  onChange={(e) => setFilterLocation(e.target.value)}
+                  className="px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"
+                >
+                  <option value="all">All Locations</option>
+                  <option value="fridge">❄️ Fridge</option>
+                  <option value="pantry">🥫 Pantry</option>
+                </select>
+
+                <select
+                  value={filterExpiration}
+                  onChange={(e) => setFilterExpiration(e.target.value)}
+                  className="px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"
+                >
+                  <option value="all">All Items</option>
+                  <option value="expired">Expired</option>
+                  <option value="soon">Expiring in 3 days</option>
+                  <option value="week">Expiring in 7 days</option>
+                </select>
+              </div>
+
+              {/* Active filters display */}
+              {(searchQuery || filterCategory !== 'all' || filterLocation !== 'all' || filterExpiration !== 'all') && (
+                <div className="mt-4 flex items-center gap-2 text-sm text-gray-600">
+                  <span>Active filters:</span>
+                  <button
+                    onClick={() => {
+                      setSearchQuery('');
+                      setFilterCategory('all');
+                      setFilterLocation('all');
+                      setFilterExpiration('all');
+                    }}
+                    className="text-blue-600 hover:text-blue-800 underline"
+                  >
+                    Clear all
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Add New Item Form */}
+            <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
+              <h2 className="text-xl font-semibold text-gray-800 mb-4">Add New Item</h2>
+              
+              {/* Photo Upload */}
+              <div className="mb-6">
+                <label className="block text-sm font-semibold text-gray-600 mb-2">
+                  Photo (optional)
+                </label>
+                {!newItem.photo ? (
+                  <label className="cursor-pointer">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handlePhotoUpload}
+                      className="hidden"
+                    />
+                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-blue-500 transition">
+                      <div className="w-12 h-12 mx-auto text-gray-400 mb-2">
+                        <Camera />
+                      </div>
+                      <p className="text-gray-600">Click to add photo</p>
+                      <p className="text-sm text-gray-400 mt-1">For reference only</p>
+                    </div>
+                  </label>
+                ) : (
+                  <div className="relative">
+                    <img 
+                      src={newItem.photo} 
+                      alt="Food item" 
+                      className="w-full h-48 object-cover rounded-lg"
+                    />
+                    <button
+                      onClick={removePhoto}
+                      className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white p-2 rounded-full"
+                    >
+                      <Trash2 />
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Manual Entry Form */}
+              <div className="border-t-2 border-gray-200 pt-6">
+                <h3 className="text-sm font-semibold text-gray-600 mb-3">Item Details:</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <input
+                    type="text"
+                    placeholder="Item name"
+                    value={newItem.name}
+                    onChange={(e) => setNewItem({...newItem, name: e.target.value})}
+                    className="px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"
+                  />
+                  <select
+                    value={newItem.category}
+                    onChange={(e) => setNewItem({...newItem, category: e.target.value})}
+                    className="px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"
+                  >
+                    {CATEGORIES.map(cat => (
+                      <option key={cat.value} value={cat.value}>{cat.label}</option>
+                    ))}
+                  </select>
+                  <select
+                    value={newItem.location}
+                    onChange={(e) => setNewItem({...newItem, location: e.target.value})}
+                    className="px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"
+                  >
+                    <option value="fridge">Fridge</option>
+                    <option value="pantry">Pantry</option>
+                  </select>
+                  <input
+                    type="date"
+                    value={newItem.expirationDate}
+                    onChange={(e) => setNewItem({...newItem, expirationDate: e.target.value})}
+                    className="px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"
+                  />
+                  <input
+                    type="text"
+                    placeholder="Quantity (optional)"
+                    value={newItem.quantity}
+                    onChange={(e) => setNewItem({...newItem, quantity: e.target.value})}
+                    className="px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none md:col-span-2"
+                  />
+                </div>
+                <button
+                  onClick={addItem}
+                  className="mt-4 w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg flex items-center justify-center gap-2 transition"
+                >
+                  <Plus />
+                  Add Item
+                </button>
+              </div>
+            </div>
+
+            {/* Items Display */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Fridge */}
+              <div className="bg-white rounded-xl shadow-lg p-6">
+                <h2 className="text-2xl font-bold text-blue-600 mb-4 flex items-center gap-2">
+                  ❄️ Fridge
+                  <span className="text-sm font-normal text-gray-500">({fridgeItems.length})</span>
+                </h2>
+                {renderItems(fridgeItems)}
+              </div>
+
+              {/* Pantry */}
+              <div className="bg-white rounded-xl shadow-lg p-6">
+                <h2 className="text-2xl font-bold text-orange-600 mb-4 flex items-center gap-2">
+                  🥫 Pantry
+                  <span className="text-sm font-normal text-gray-500">({pantryItems.length})</span>
+                </h2>
+                {renderItems(pantryItems)}
+              </div>
+            </div>
+
+            {/* Legend */}
+            <div className="bg-white rounded-xl shadow-lg p-6 mt-6">
+              <h3 className="font-semibold text-gray-800 mb-3">Expiration Guide:</h3>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 bg-red-100 border-2 border-red-300 rounded"></div>
+                  <span>Expired</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 bg-yellow-100 border-2 border-yellow-300 rounded"></div>
+                  <span>≤ 3 days</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 bg-blue-50 border-2 border-blue-200 rounded"></div>
+                  <span>4-7 days</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 bg-green-50 border-2 border-green-200 rounded"></div>
+                  <span>&gt; 7 days</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    ReactDOM.render(<FoodTracker />, document.getElementById('root'));
+  </script>
+</body>
+</html>
